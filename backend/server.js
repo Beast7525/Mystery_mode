@@ -93,7 +93,7 @@ function evaluateMathExpression(expr) {
 // ==========================================
 
 // Register a new user
-app.post('/api/auth/register', async (req, res) => {
+app.post('https://mystery-mode-backend.onrender.com/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -137,7 +137,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login user/admin
-app.post('/api/auth/login', async (req, res) => {
+app.post('https://mystery-mode-backend.onrender.com/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -177,7 +177,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Get profile details
-app.get('/api/auth/me', authenticateJWT, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/auth/me', authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
@@ -195,7 +195,7 @@ app.get('/api/auth/me', authenticateJWT, async (req, res) => {
 // ==========================================
 
 // Get round configuration settings (time limit)
-app.get('/api/game/settings/:roundNum', authenticateJWT, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/game/settings/:roundNum', authenticateJWT, async (req, res) => {
   try {
     const roundNum = parseInt(req.params.roundNum);
     if (![1, 2, 3].includes(roundNum)) {
@@ -220,7 +220,7 @@ app.get('/api/game/settings/:roundNum', authenticateJWT, async (req, res) => {
 });
 
 // Get list of questions for a round (SECURE: hides answers!)
-app.get('/api/game/round/:roundNum', authenticateJWT, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/game/round/:roundNum', authenticateJWT, async (req, res) => {
   try {
     const roundNum = parseInt(req.params.roundNum);
     if (![1, 2, 3].includes(roundNum)) {
@@ -250,7 +250,7 @@ app.get('/api/game/round/:roundNum', authenticateJWT, async (req, res) => {
 });
 
 // Submit round responses
-app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
+app.post('https://mystery-mode-backend.onrender.com/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
   try {
     const roundNum = parseInt(req.params.roundNum);
     const { answers, timeTaken } = req.body; // answers is an object mapping questionId -> user response text
@@ -352,7 +352,7 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
 // ==========================================
 
 // Get dashboard settings
-app.get('/api/admin/settings', authenticateJWT, isAdmin, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/admin/settings', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const settings = await RoundSetting.find().sort({ round: 1 });
     res.json({ settings });
@@ -362,7 +362,7 @@ app.get('/api/admin/settings', authenticateJWT, isAdmin, async (req, res) => {
 });
 
 // Update round timers
-app.put('/api/admin/settings/:roundNum', authenticateJWT, isAdmin, async (req, res) => {
+app.put('https://mystery-mode-backend.onrender.com/api/admin/settings/:roundNum', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const roundNum = parseInt(req.params.roundNum);
     const { timeLimit } = req.body;
@@ -382,7 +382,7 @@ app.put('/api/admin/settings/:roundNum', authenticateJWT, isAdmin, async (req, r
 });
 
 // Get user list & scoreboard analytics
-app.get('/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const users = await User.find({ role: 'user' }).select('-password').sort({ totalScore: -1, totalTime: 1 });
     res.json({ users });
@@ -392,7 +392,7 @@ app.get('/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
 });
 
 // Create a new user (via admin panel)
-app.post('/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
+app.post('https://mystery-mode-backend.onrender.com/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -421,7 +421,7 @@ app.post('/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
 });
 
 // Edit user status/round/credentials
-app.put('/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) => {
+app.put('https://mystery-mode-backend.onrender.com/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     const { username, password, resetProgress } = req.body;
@@ -461,7 +461,7 @@ app.put('/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) =
 });
 
 // Delete a user
-app.delete('/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) => {
+app.delete('https://mystery-mode-backend.onrender.com/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     await User.findByIdAndDelete(userId);
@@ -473,7 +473,7 @@ app.delete('/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res
 });
 
 // Admin: Get details of answers submitted by user
-app.get('/api/admin/responses/:userId', authenticateJWT, isAdmin, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/admin/responses/:userId', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
     const responses = await UserResponse.find({ userId })
@@ -486,7 +486,7 @@ app.get('/api/admin/responses/:userId', authenticateJWT, isAdmin, async (req, re
 });
 
 // Admin: Get list of all questions (with correct answers)
-app.get('/api/admin/questions', authenticateJWT, isAdmin, async (req, res) => {
+app.get('https://mystery-mode-backend.onrender.com/api/admin/questions', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const questions = await Question.find().sort({ round: 1, createdAt: 1 });
     res.json({ questions });
@@ -496,7 +496,7 @@ app.get('/api/admin/questions', authenticateJWT, isAdmin, async (req, res) => {
 });
 
 // Admin: Create question
-app.post('/api/admin/questions', authenticateJWT, isAdmin, upload.single('image'), async (req, res) => {
+app.post('https://mystery-mode-backend.onrender.com/api/admin/questions', authenticateJWT, isAdmin, upload.single('image'), async (req, res) => {
   try {
     const { round, questionText, answer, points, memorizeTime, options } = req.body;
     const roundNum = parseInt(round);
@@ -547,7 +547,7 @@ app.post('/api/admin/questions', authenticateJWT, isAdmin, upload.single('image'
 });
 
 // Admin: Edit question
-app.put('/api/admin/questions/:questionId', authenticateJWT, isAdmin, upload.single('image'), async (req, res) => {
+app.put('https://mystery-mode-backend.onrender.com/api/admin/questions/:questionId', authenticateJWT, isAdmin, upload.single('image'), async (req, res) => {
   try {
     const { questionId } = req.params;
     const { questionText, answer, points, memorizeTime, options } = req.body;
@@ -602,7 +602,7 @@ app.put('/api/admin/questions/:questionId', authenticateJWT, isAdmin, upload.sin
 });
 
 // Admin: Delete question
-app.delete('/api/admin/questions/:questionId', authenticateJWT, isAdmin, async (req, res) => {
+app.delete('https://mystery-mode-backend.onrender.com/api/admin/questions/:questionId', authenticateJWT, isAdmin, async (req, res) => {
   try {
     const { questionId } = req.params;
     const question = await Question.findById(questionId);
