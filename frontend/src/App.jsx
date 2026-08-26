@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const apiUrl = (path) => `${API_BASE_URL}${path}`;
+const assetUrl = (path) => path?.startsWith('http') ? path : apiUrl(path || '');
+
 // Helper: Get authorization header
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -21,7 +25,7 @@ export default function App() {
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
-      fetch('/api/auth/me', {
+      fetch(apiUrl('/api/auth/me'), {
         headers: getAuthHeaders()
       })
         .then(res => {
@@ -178,7 +182,7 @@ function LoginForm({ setToken, showAlert }) {
     const endpoint = '/api/auth/login';
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -248,7 +252,7 @@ function LoginForm({ setToken, showAlert }) {
 function Dashboard({ user, setView, setUser, showAlert }) {
   // Reload user status to ensure up-to-date unlock states
   useEffect(() => {
-    fetch('/api/auth/me', {
+    fetch(apiUrl('/api/auth/me'), {
       headers: getAuthHeaders()
     })
       .then(res => res.json())
@@ -393,10 +397,10 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
 
   useEffect(() => {
     // Load setting first
-    fetch('/api/game/settings/1', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/game/settings/1'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch('/api/game/round/1', { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl('/api/game/round/1'), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -426,7 +430,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
     }
 
     try {
-      const res = await fetch('/api/game/submit/1', {
+      const res = await fetch(apiUrl('/api/game/submit/1'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -499,7 +503,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
 
           <div className="image-blur-container">
             <img 
-              src={currentQuestion.imagePath} 
+              src={assetUrl(currentQuestion.imagePath)}
               alt="Blurred challenge" 
               className="blurred-image" 
             />
@@ -559,10 +563,10 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
 
   useEffect(() => {
     // Load setting first
-    fetch('/api/game/settings/2', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/game/settings/2'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch('/api/game/round/2', { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl('/api/game/round/2'), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -617,7 +621,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
     const submissionAnswers = forcedAnswers || finalAnswers;
 
     try {
-      const res = await fetch('/api/game/submit/2', {
+      const res = await fetch(apiUrl('/api/game/submit/2'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -748,10 +752,10 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
   const startTime = useRef(Date.now());
 
   useEffect(() => {
-    fetch('/api/game/settings/3', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/game/settings/3'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch('/api/game/round/3', { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl('/api/game/round/3'), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -780,7 +784,7 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
     }
 
     try {
-      const res = await fetch('/api/game/submit/3', {
+      const res = await fetch(apiUrl('/api/game/submit/3'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -944,21 +948,21 @@ function AdminPanel({ showAlert }) {
   const [uploadFile, setUploadFile] = useState(null);
 
   const fetchScoreboard = () => {
-    fetch('/api/admin/users', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/admin/users'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setUsers(data.users || []))
       .catch(err => showAlert('Error loading scoreboard'));
   };
 
   const fetchQuestions = () => {
-    fetch('/api/admin/questions', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/admin/questions'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setQuestions(data.questions || []))
       .catch(err => showAlert('Error loading questions'));
   };
 
   const fetchSettings = () => {
-    fetch('/api/admin/settings', { headers: getAuthHeaders() })
+    fetch(apiUrl('/api/admin/settings'), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setSettings(data.settings || []))
       .catch(err => showAlert('Error loading timer settings'));
@@ -976,7 +980,7 @@ function AdminPanel({ showAlert }) {
   }, [activeTab]);
 
   const viewUserResponses = (u) => {
-    fetch(`/api/admin/responses/${u._id}`, { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/admin/responses/${u._id}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setSelectedUserResponses(data.responses);
@@ -995,7 +999,7 @@ function AdminPanel({ showAlert }) {
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(apiUrl(url), {
         method,
         headers: getAuthHeaders(),
         body: JSON.stringify(userForm)
@@ -1014,7 +1018,7 @@ function AdminPanel({ showAlert }) {
   const handleDeleteUser = async (uId) => {
     if (!window.confirm('Are you sure you want to delete this user? All their responses will be purged.')) return;
     try {
-      const res = await fetch(`/api/admin/users/${uId}`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${uId}`), {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -1051,7 +1055,7 @@ function AdminPanel({ showAlert }) {
       const headers = getAuthHeaders();
       delete headers['Content-Type']; // Required so browser sets boundary for FormData
 
-      const res = await fetch(url, {
+      const res = await fetch(apiUrl(url), {
         method,
         headers,
         body: formData
@@ -1072,7 +1076,7 @@ function AdminPanel({ showAlert }) {
   const handleDeleteQuestion = async (qId) => {
     if (!window.confirm('Delete this question?')) return;
     try {
-      const res = await fetch(`/api/admin/questions/${qId}`, {
+      const res = await fetch(apiUrl(`/api/admin/questions/${qId}`), {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -1093,7 +1097,7 @@ function AdminPanel({ showAlert }) {
     if (isNaN(secs) || secs <= 0) return showAlert('Please enter a valid positive number');
 
     try {
-      const res = await fetch(`/api/admin/settings/${roundNum}`, {
+      const res = await fetch(apiUrl(`/api/admin/settings/${roundNum}`), {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ timeLimit: secs })
@@ -1283,7 +1287,7 @@ function AdminPanel({ showAlert }) {
                         </td>
                         <td>
                           {q.round === 1 ? (
-                            <img src={q.imagePath} className="img-preview" alt="Thumbnail" />
+                            <img src={assetUrl(q.imagePath)} className="img-preview" alt="Thumbnail" />
                           ) : q.round === 2 ? (
                             <span>{q.memorizeTime}s Study Timer</span>
                           ) : (
@@ -1372,7 +1376,7 @@ function AdminPanel({ showAlert }) {
 
                   {r.questionId?.imagePath && (
                     <div style={{ marginBottom: '8px' }}>
-                      <img src={r.questionId.imagePath} alt="Submission context" style={{ height: '60px', borderRadius: '4px' }} />
+                      <img src={assetUrl(r.questionId.imagePath)} alt="Submission context" style={{ height: '60px', borderRadius: '4px' }} />
                     </div>
                   )}
 
