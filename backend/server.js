@@ -26,6 +26,10 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+app.get('/', (req, res) => {
+  res.json({ service: 'Mystery Mode API', status: 'ok' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
