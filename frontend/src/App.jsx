@@ -1222,11 +1222,6 @@ function AdminPanel({ showAlert }) {
           <p className="eyebrow">Mystery Mode / Admin</p>
           <h2>Admin Management Panel</h2>
         </div>
-        <div className="api-status">
-          <span className="api-dot"></span>
-          <span>API</span>
-          <strong>{API_DISPLAY_URL}</strong>
-        </div>
       </div>
 
       <div className="admin-container">
