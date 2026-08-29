@@ -468,7 +468,6 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
   const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
-  const [showOriginalReveal, setShowOriginalReveal] = useState(false);
 
   // Time tracking
   const startTime = useRef(Date.now());
@@ -545,7 +544,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      setShowOriginalReveal(true);
+      submitGame(updatedAnswers);
     }
   };
 
@@ -565,7 +564,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
       <div className="game-info-bar">
         <div>
           <h2>Round 1: Blurred Visions</h2>
-          <p>{showOriginalReveal ? 'Final reveal is ready. Review the original media, then submit the round.' : 'Identify the object in the blurred picture. Pick the correct answer.'}</p>
+          <p>Identify the object in the blurred picture. Pick the correct answer.</p>
         </div>
         <div className={`timer-box ${timer.isWarning ? 'warning' : ''}`}>
           <Clock3 aria-hidden="true" className="timer-icon" /> {timer.formatTime()}
@@ -579,13 +578,13 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
             <span className="badge badge-secondary">{currentQuestion.points} Points</span>
           </div>
 
-          <div className={`image-blur-container ${showOriginalReveal ? 'is-original' : ''}`}>
+          <div className="image-blur-container">
             <MediaPreview
               src={currentQuestion.imagePath}
-              alt={showOriginalReveal ? 'Original challenge media' : 'Blurred challenge media'}
-              mode={showOriginalReveal ? 'original' : 'blurred'}
+              alt="Challenge media"
+              mode="blurred"
             />
-            <span className="media-stage-label">{showOriginalReveal ? 'Original' : 'Blurred'}</span>
+            <span className="media-stage-label">Blurred</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
@@ -602,7 +601,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
                   border: selectedOption === opt ? '2px solid hsl(var(--primary))' : '2px solid var(--border-glass)',
                 }}
                 onClick={() => setSelectedOption(opt)}
-                disabled={submitting || showOriginalReveal}
+                disabled={submitting}
               >
                 {String.fromCharCode(65 + idx)}. {opt}
               </button>
@@ -612,9 +611,9 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
       </div>
 
       <div className="btn-group">
-        <button className="btn btn-primary" onClick={showOriginalReveal ? () => submitGame(answers) : handleNextQuestion} disabled={submitting}>
-          <ButtonIcon icon={showOriginalReveal ? Save : currentIndex + 1 === questions.length ? ImageIcon : Play} />
-          {showOriginalReveal ? 'Submit Round 1' : currentIndex + 1 === questions.length ? 'Reveal Original' : 'Submit & Next Question'}
+        <button className="btn btn-primary" onClick={handleNextQuestion} disabled={submitting}>
+          <ButtonIcon icon={currentIndex + 1 === questions.length ? Save : Play} />
+          {currentIndex + 1 === questions.length ? 'Submit Round 1' : 'Submit & Next Question'}
         </button>
       </div>
     </div>
@@ -1397,7 +1396,7 @@ function AdminPanel({ showAlert }) {
                       <tr key={q._id}>
                         <td><span className="badge badge-secondary">R{q.round}</span></td>
                         <td>
-                          <div style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ maxWidth: '300px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                             {q.questionText || '(No text clue)'}
                           </div>
                         </td>
