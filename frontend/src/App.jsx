@@ -1,9 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  BarChart3,
+  CheckCircle2,
+  Clock3,
+  FileQuestion,
+  Gauge,
+  Home,
+  Image as ImageIcon,
+  LockKeyhole,
+  LogOut,
+  Pencil,
+  Play,
+  Plus,
+  Save,
+  Settings,
+  Shield,
+  Sparkles,
+  Trash2,
+  Trophy,
+  UploadCloud,
+  Users,
+  X
+} from 'lucide-react';
 import './App.css';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
 const assetUrl = (path) => path?.startsWith('http') ? path : apiUrl(path || '');
+const API_DISPLAY_URL = API_BASE_URL || 'Local Vite proxy';
+
+const getMediaKind = (path = '') => {
+  const cleanPath = path.split('?')[0].toLowerCase();
+  if (/\.(mp4|webm|ogg|mov|m4v)$/.test(cleanPath)) return 'video';
+  if (/\.(mp3|wav|m4a|aac|oga|flac)$/.test(cleanPath)) return 'audio';
+  return 'image';
+};
+
+function ButtonIcon({ icon: Icon }) {
+  return Icon ? <Icon aria-hidden="true" className="btn-icon" /> : null;
+}
+
+function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'original', kindOverride = '' }) {
+  if (!src) {
+    return (
+      <div className={`media-preview media-empty ${className}`}>
+        <ImageIcon aria-hidden="true" />
+        <span>No media</span>
+      </div>
+    );
+  }
+
+  const url = assetUrl(src);
+  const kind = kindOverride || getMediaKind(src);
+
+  if (kind === 'video') {
+    return (
+      <video className={`media-preview ${className}`} controls playsInline preload="metadata">
+        <source src={url} />
+      </video>
+    );
+  }
+
+  if (kind === 'audio') {
+    return (
+      <div className={`media-preview audio-preview ${className}`}>
+        <audio controls src={url} />
+      </div>
+    );
+  }
+
+  return <img src={url} alt={alt} className={`media-preview ${mode === 'blurred' ? 'blurred-image' : ''} ${className}`} />;
+}
 
 // Helper: Get authorization header
 const getAuthHeaders = () => {
@@ -146,17 +213,20 @@ function Header({ user, view, setView, handleLogout }) {
 
         {user?.role === 'admin' && view !== 'admin' && (
           <button className="btn btn-outline btn-sm" onClick={() => setView('admin')}>
+            <ButtonIcon icon={Shield} />
             Admin Panel
           </button>
         )}
 
         {user?.role === 'user' && view !== 'home' && (
           <button className="btn btn-outline btn-sm" onClick={() => setView('home')}>
+            <ButtonIcon icon={Home} />
             Rounds Hub
           </button>
         )}
 
         <button className="btn btn-danger" style={{ padding: '6px 14px', fontSize: '0.85rem' }} onClick={handleLogout}>
+          <ButtonIcon icon={LogOut} />
           Logout
         </button>
       </div>
@@ -268,6 +338,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
       title: 'Round 1: Pixeled Vision',
       description: 'Identify 5 objects hidden behind pixeled photos. Work fast to secure your time score!',
       icon: '01',
+      Icon: ImageIcon,
       viewKey: 'round1'
     },
     {
@@ -275,6 +346,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
       title: 'Round 2: Memory Matrix',
       description: 'Study sentences before the screen goes pitch black. Type back exactly what you recall.',
       icon: '02',
+      Icon: Sparkles,
       viewKey: 'round2'
     },
     {
@@ -282,6 +354,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
       title: 'Round 3: Math Dash',
       description: 'Solve arithmetic calculations against a rapid countdown clock. Correctness and speed are key.',
       icon: '03',
+      Icon: Gauge,
       viewKey: 'round3'
     }
   ];
@@ -325,7 +398,10 @@ function Dashboard({ user, setView, setUser, showAlert }) {
               style={{ animationDelay: `${round.num * 0.1}s` }}
             >
               <span className={`round-badge ${badgeClass}`}>{statusText}</span>
-              <div className="round-icon-wrapper">{round.icon}</div>
+              <div className="round-icon-wrapper">
+                <round.Icon aria-hidden="true" />
+                <span>{round.icon}</span>
+              </div>
               <h3 className="round-title">{round.title}</h3>
               <p className="round-desc">{round.description}</p>
               
@@ -334,6 +410,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
                 disabled={!isUnlocked || isCompleted}
                 onClick={() => setView(round.viewKey)}
               >
+                <ButtonIcon icon={isCompleted ? CheckCircle2 : isUnlocked ? Play : LockKeyhole} />
                 {isCompleted ? 'Completed' : isUnlocked ? 'Begin Challenge' : 'Stage Locked'}
               </button>
             </div>
@@ -391,6 +468,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
   const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
+  const [showOriginalReveal, setShowOriginalReveal] = useState(false);
 
   // Time tracking
   const startTime = useRef(Date.now());
@@ -467,7 +545,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      submitGame(updatedAnswers);
+      setShowOriginalReveal(true);
     }
   };
 
@@ -487,10 +565,10 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
       <div className="game-info-bar">
         <div>
           <h2>Round 1: Blurred Visions</h2>
-          <p>Identify the object in the blurred picture. Pick the correct answer.</p>
+          <p>{showOriginalReveal ? 'Final reveal is ready. Review the original media, then submit the round.' : 'Identify the object in the blurred picture. Pick the correct answer.'}</p>
         </div>
         <div className={`timer-box ${timer.isWarning ? 'warning' : ''}`}>
-          ⏱️ {timer.formatTime()}
+          <Clock3 aria-hidden="true" className="timer-icon" /> {timer.formatTime()}
         </div>
       </div>
 
@@ -501,12 +579,13 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
             <span className="badge badge-secondary">{currentQuestion.points} Points</span>
           </div>
 
-          <div className="image-blur-container">
-            <img 
-              src={assetUrl(currentQuestion.imagePath)}
-              alt="Blurred challenge" 
-              className="blurred-image" 
+          <div className={`image-blur-container ${showOriginalReveal ? 'is-original' : ''}`}>
+            <MediaPreview
+              src={currentQuestion.imagePath}
+              alt={showOriginalReveal ? 'Original challenge media' : 'Blurred challenge media'}
+              mode={showOriginalReveal ? 'original' : 'blurred'}
             />
+            <span className="media-stage-label">{showOriginalReveal ? 'Original' : 'Blurred'}</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
@@ -523,7 +602,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
                   border: selectedOption === opt ? '2px solid hsl(var(--primary))' : '2px solid var(--border-glass)',
                 }}
                 onClick={() => setSelectedOption(opt)}
-                disabled={submitting}
+                disabled={submitting || showOriginalReveal}
               >
                 {String.fromCharCode(65 + idx)}. {opt}
               </button>
@@ -533,8 +612,9 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
       </div>
 
       <div className="btn-group">
-        <button className="btn btn-primary" onClick={handleNextQuestion} disabled={submitting}>
-          {currentIndex + 1 === questions.length ? 'Submit Stage' : 'Submit & Next Question'}
+        <button className="btn btn-primary" onClick={showOriginalReveal ? () => submitGame(answers) : handleNextQuestion} disabled={submitting}>
+          <ButtonIcon icon={showOriginalReveal ? Save : currentIndex + 1 === questions.length ? ImageIcon : Play} />
+          {showOriginalReveal ? 'Submit Round 1' : currentIndex + 1 === questions.length ? 'Reveal Original' : 'Submit & Next Question'}
         </button>
       </div>
     </div>
@@ -677,7 +757,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
           <p>Read, remember, and transcribe sentences accurately.</p>
         </div>
         <div className={`timer-box ${roundTimer.isWarning ? 'warning' : ''}`}>
-          ⏱️ {roundTimer.formatTime()}
+          <Clock3 aria-hidden="true" className="timer-icon" /> {roundTimer.formatTime()}
         </div>
       </div>
 
@@ -857,7 +937,7 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
           <p>Pick values for <strong>a, b, c, d</strong> so the formula equals the target.</p>
         </div>
         <div className={`timer-box ${roundTimer.isWarning ? 'warning' : ''}`}>
-          ⏱️ {roundTimer.formatTime()}
+          <Clock3 aria-hidden="true" className="timer-icon" /> {roundTimer.formatTime()}
         </div>
       </div>
 
@@ -944,8 +1024,10 @@ function AdminPanel({ showAlert }) {
   const [userForm, setUserForm] = useState({ id: '', username: '', password: '', resetProgress: false });
   
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
-  const [questionForm, setQuestionForm] = useState({ id: '', round: 1, questionText: '', answer: '', points: 10, memorizeTime: 10, options: '' });
+  const [questionForm, setQuestionForm] = useState({ id: '', round: 1, questionText: '', answer: '', points: 10, memorizeTime: 10, options: '', imagePath: '' });
   const [uploadFile, setUploadFile] = useState(null);
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState('');
+  const uploadPreviewRef = useRef('');
 
   const fetchScoreboard = () => {
     fetch(apiUrl('/api/admin/users'), { headers: getAuthHeaders() })
@@ -978,6 +1060,30 @@ function AdminPanel({ showAlert }) {
       fetchSettings();
     }
   }, [activeTab]);
+
+  const clearUploadPreview = () => {
+    if (uploadPreviewRef.current) {
+      URL.revokeObjectURL(uploadPreviewRef.current);
+      uploadPreviewRef.current = '';
+    }
+    setUploadFile(null);
+    setUploadPreviewUrl('');
+  };
+
+  const handleUploadChange = (file) => {
+    clearUploadPreview();
+    if (!file) return;
+
+    const nextUrl = URL.createObjectURL(file);
+    uploadPreviewRef.current = nextUrl;
+    setUploadFile(file);
+    setUploadPreviewUrl(nextUrl);
+  };
+
+  const closeQuestionModal = () => {
+    clearUploadPreview();
+    setQuestionModalOpen(false);
+  };
 
   const viewUserResponses = (u) => {
     fetch(apiUrl(`/api/admin/responses/${u._id}`), { headers: getAuthHeaders() })
@@ -1065,8 +1171,7 @@ function AdminPanel({ showAlert }) {
       if (!res.ok) throw new Error(data.error || 'Action failed');
 
       showAlert(`Question saved successfully!`, 'success');
-      setQuestionModalOpen(false);
-      setUploadFile(null);
+      closeQuestionModal();
       fetchQuestions();
     } catch (err) {
       showAlert(err.message);
@@ -1112,9 +1217,16 @@ function AdminPanel({ showAlert }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2>Admin Management Panel</h2>
-        <span className="badge badge-primary">Control Dashboard</span>
+      <div className="admin-hero">
+        <div>
+          <p className="eyebrow">Mystery Mode / Admin</p>
+          <h2>Admin Management Panel</h2>
+        </div>
+        <div className="api-status">
+          <span className="api-dot"></span>
+          <span>API</span>
+          <strong>{API_DISPLAY_URL}</strong>
+        </div>
       </div>
 
       <div className="admin-container">
@@ -1124,25 +1236,29 @@ function AdminPanel({ showAlert }) {
             className={`sidebar-tab ${activeTab === 'scoreboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('scoreboard')}
           >
-            📊 Leaderboard Analytics
+            <BarChart3 aria-hidden="true" />
+            Leaderboard Analytics
           </button>
           <button
             className={`sidebar-tab ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
-            👥 User Accounts
+            <Users aria-hidden="true" />
+            User Accounts
           </button>
           <button
             className={`sidebar-tab ${activeTab === 'questions' ? 'active' : ''}`}
             onClick={() => setActiveTab('questions')}
           >
-            📝 Contest Questions
+            <FileQuestion aria-hidden="true" />
+            Contest Questions
           </button>
           <button
             className={`sidebar-tab ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
-            ⚙️ Stage Configurations
+            <Settings aria-hidden="true" />
+            Stage Configurations
           </button>
         </aside>
 
@@ -1185,6 +1301,7 @@ function AdminPanel({ showAlert }) {
                         </td>
                         <td>
                           <button className="btn btn-outline btn-sm" onClick={() => viewUserResponses(u)}>
+                            <ButtonIcon icon={Trophy} />
                             Audit Submissions
                           </button>
                         </td>
@@ -1208,7 +1325,8 @@ function AdminPanel({ showAlert }) {
                   setUserForm({ id: '', username: '', password: '', resetProgress: false });
                   setUserModalOpen(true);
                 }}>
-                  + Create Participant
+                  <ButtonIcon icon={Plus} />
+                  Create Participant
                 </button>
               </div>
 
@@ -1233,9 +1351,11 @@ function AdminPanel({ showAlert }) {
                             setUserForm({ id: u._id, username: u.username, password: '', resetProgress: false });
                             setUserModalOpen(true);
                           }}>
+                            <ButtonIcon icon={Pencil} />
                             Modify
                           </button>
                           <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u._id)}>
+                            <ButtonIcon icon={Trash2} />
                             Delete
                           </button>
                         </td>
@@ -1256,11 +1376,12 @@ function AdminPanel({ showAlert }) {
               <div className="flex-between mb-4">
                 <h3>Question Databank</h3>
                 <button className="btn btn-primary" onClick={() => {
-                  setQuestionForm({ id: '', round: 1, questionText: '', answer: '', points: 10, memorizeTime: 10, options: '' });
-                  setUploadFile(null);
+                  setQuestionForm({ id: '', round: 1, questionText: '', answer: '', points: 10, memorizeTime: 10, options: '', imagePath: '' });
+                  clearUploadPreview();
                   setQuestionModalOpen(true);
                 }}>
-                  + Add Challenge Question
+                  <ButtonIcon icon={Plus} />
+                  Add Challenge Question
                 </button>
               </div>
 
@@ -1287,7 +1408,10 @@ function AdminPanel({ showAlert }) {
                         </td>
                         <td>
                           {q.round === 1 ? (
-                            <img src={assetUrl(q.imagePath)} className="img-preview" alt="Thumbnail" />
+                            <div className="asset-cell">
+                              <MediaPreview src={q.imagePath} className="img-preview" alt="Question media thumbnail" />
+                              <span>Blurred in game, original on reveal</span>
+                            </div>
                           ) : q.round === 2 ? (
                             <span>{q.memorizeTime}s Study Timer</span>
                           ) : (
@@ -1305,14 +1429,17 @@ function AdminPanel({ showAlert }) {
                               answer: q.answer,
                               points: q.points,
                               memorizeTime: q.memorizeTime || 10,
-                              options: q.options ? q.options.join(', ') : ''
+                              options: q.options ? q.options.join(', ') : '',
+                              imagePath: q.imagePath || ''
                             });
-                            setUploadFile(null);
+                            clearUploadPreview();
                             setQuestionModalOpen(true);
                           }}>
+                            <ButtonIcon icon={Pencil} />
                             Modify
                           </button>
                           <button className="btn btn-danger btn-sm" onClick={() => handleDeleteQuestion(q._id)}>
+                            <ButtonIcon icon={Trash2} />
                             Delete
                           </button>
                         </td>
@@ -1345,6 +1472,7 @@ function AdminPanel({ showAlert }) {
                         {s.timeLimit} seconds ({Math.floor(s.timeLimit / 60)}m {s.timeLimit % 60}s)
                       </span>
                       <button className="btn btn-outline" onClick={() => handleSettingUpdate(s.round, s.timeLimit)}>
+                        <ButtonIcon icon={Clock3} />
                         Edit Limit
                       </button>
                     </div>
@@ -1361,7 +1489,7 @@ function AdminPanel({ showAlert }) {
       {selectedUserResponses && (
         <div className="modal-overlay" onClick={() => setSelectedUserResponses(null)}>
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
-            <button className="modal-close" onClick={() => setSelectedUserResponses(null)}>×</button>
+            <button className="modal-close" onClick={() => setSelectedUserResponses(null)} aria-label="Close"><X aria-hidden="true" /></button>
             <h3 className="mb-4">Submission Audit: <span style={{ color: 'hsl(var(--secondary))' }}>{selectedUserName}</span></h3>
             
             <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
@@ -1376,7 +1504,7 @@ function AdminPanel({ showAlert }) {
 
                   {r.questionId?.imagePath && (
                     <div style={{ marginBottom: '8px' }}>
-                      <img src={assetUrl(r.questionId.imagePath)} alt="Submission context" style={{ height: '60px', borderRadius: '4px' }} />
+                      <MediaPreview src={r.questionId.imagePath} alt="Submission context" className="audit-media" />
                     </div>
                   )}
 
@@ -1408,7 +1536,7 @@ function AdminPanel({ showAlert }) {
       {userModalOpen && (
         <div className="modal-overlay" onClick={() => setUserModalOpen(false)}>
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setUserModalOpen(false)}>×</button>
+            <button className="modal-close" onClick={() => setUserModalOpen(false)} aria-label="Close"><X aria-hidden="true" /></button>
             <h3>{userForm.id ? 'Modify Account' : 'New Participant Registration'}</h3>
             
             <form onSubmit={handleSaveUser} style={{ marginTop: '20px' }}>
@@ -1456,6 +1584,7 @@ function AdminPanel({ showAlert }) {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
+                  <ButtonIcon icon={Save} />
                   Save Changes
                 </button>
               </div>
@@ -1466,9 +1595,9 @@ function AdminPanel({ showAlert }) {
 
       {/* QUESTION CREATE / MODIFY MODAL */}
       {questionModalOpen && (
-        <div className="modal-overlay" onClick={() => setQuestionModalOpen(false)}>
+        <div className="modal-overlay" onClick={closeQuestionModal}>
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setQuestionModalOpen(false)}>×</button>
+            <button className="modal-close" onClick={closeQuestionModal} aria-label="Close"><X aria-hidden="true" /></button>
             <h3>{questionForm.id ? 'Modify Challenge' : 'New Challenge Definition'}</h3>
             
             <form onSubmit={handleSaveQuestion} style={{ marginTop: '20px' }}>
@@ -1495,10 +1624,26 @@ function AdminPanel({ showAlert }) {
                   <input
                     type="file"
                     className="form-input"
-                    accept="image/*"
-                    onChange={(e) => setUploadFile(e.target.files[0])}
+                    accept="image/*,video/*,audio/*"
+                    onChange={(e) => handleUploadChange(e.target.files?.[0] || null)}
                     required={!questionForm.id}
                   />
+                  <div className="upload-hint">
+                    <UploadCloud aria-hidden="true" />
+                    <span>Images are blurred for players. Video and audio are preserved as media previews for admin use.</span>
+                  </div>
+                  {(uploadPreviewUrl || questionForm.imagePath) && (
+                    <div className="media-pair-preview">
+                      <div>
+                        <span>Player view</span>
+                        <MediaPreview src={uploadPreviewUrl || questionForm.imagePath} className="img-preview-lg" mode="blurred" alt="Blurred upload preview" kindOverride={uploadFile?.type?.split('/')[0]} />
+                      </div>
+                      <div>
+                        <span>Original reveal</span>
+                        <MediaPreview src={uploadPreviewUrl || questionForm.imagePath} className="img-preview-lg" alt="Original upload preview" kindOverride={uploadFile?.type?.split('/')[0]} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1529,13 +1674,15 @@ function AdminPanel({ showAlert }) {
                 />
               </div>
 
-              {questionForm.round === 3 && (
+              {(questionForm.round === 1 || questionForm.round === 3) && (
                 <div className="form-group">
-                  <label className="form-label">Options (comma-separated list, e.g. 12, 14, 16, 18) *</label>
+                  <label className="form-label">
+                    {questionForm.round === 1 ? 'Answer Options (comma-separated) *' : 'Options (comma-separated list, e.g. 12, 14, 16, 18) *'}
+                  </label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Enter 4 options separated by commas..."
+                    placeholder={questionForm.round === 1 ? 'Cat, Dog, Car, Banana' : 'Enter 4 options separated by commas...'}
                     value={questionForm.options}
                     onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })}
                     required
@@ -1570,10 +1717,11 @@ function AdminPanel({ showAlert }) {
               </div>
 
               <div className="btn-group">
-                <button type="button" className="btn btn-outline" onClick={() => setQuestionModalOpen(false)}>
+                <button type="button" className="btn btn-outline" onClick={closeQuestionModal}>
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
+                  <ButtonIcon icon={Save} />
                   Save Question
                 </button>
               </div>
