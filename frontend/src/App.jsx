@@ -144,7 +144,7 @@ export default function App() {
     <div className="App">
       {/* Alert Banner */}
       {alertMsg.text && (
-        <div 
+        <div
           className="fade-in"
           style={{
             position: 'fixed',
@@ -380,7 +380,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
         {rounds.map((round) => {
           const isCompleted = user.unlockedRound > round.num || user.gameCompleted;
           const isUnlocked = user.unlockedRound >= round.num;
-          
+
           let statusText = 'Locked';
           let badgeClass = 'locked';
           if (isCompleted) {
@@ -404,7 +404,7 @@ function Dashboard({ user, setView, setUser, showAlert }) {
               </div>
               <h3 className="round-title">{round.title}</h3>
               <p className="round-desc">{round.description}</p>
-              
+
               <button
                 className={`btn w-full ${isCompleted ? 'btn-outline' : isUnlocked ? 'btn-primary' : 'btn-outline'}`}
                 disabled={!isUnlocked || isCompleted}
@@ -520,7 +520,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
       if (!res.ok) throw new Error(data.error || 'Submission failed');
 
       showAlert(`Round 1 Submitted! You earned points. Unlocking Round 2.`, 'success');
-      
+
       // Update local state
       setUser(prev => ({ ...prev, unlockedRound: 2 }));
       setView('home');
@@ -582,9 +582,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
             <MediaPreview
               src={currentQuestion.imagePath}
               alt="Challenge media"
-              mode="blurred"
             />
-            <span className="media-stage-label">Blurred</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
@@ -668,7 +666,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
 
     if (isMemorizing) {
       setMemorizeSeconds(questions[currentIndex].memorizeTime || 10);
-      
+
       timerIntervalRef.current = setInterval(() => {
         setMemorizeSeconds(prev => {
           if (prev <= 1) {
@@ -691,7 +689,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
     clearInterval(timerIntervalRef.current);
     const elapsedSeconds = Math.round((Date.now() - startTime.current) / 1000);
     const finalAnswers = { ...answers };
-    
+
     // Save current sentence if typed in answer prompt
     if (!isMemorizing && questions[currentIndex]) {
       finalAnswers[questions[currentIndex]._id] = typedSentence;
@@ -801,7 +799,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
       </div>
 
       <div className="btn-group">
-       
+
         {isMemorizing ? (
           <button className="btn btn-secondary" onClick={() => setIsMemorizing(false)}>
             I am Ready (Hide Text)
@@ -856,7 +854,7 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
 
     const elapsedSeconds = Math.round((Date.now() - startTime.current) / 1000);
     const finalAnswers = forcedAnswers || { ...answers };
-    
+
     const currentQuestion = questions[currentIndex];
     if (currentQuestion) {
       finalAnswers[currentQuestion._id] = `${selections.a},${selections.b},${selections.c},${selections.d}`;
@@ -1013,15 +1011,15 @@ function AdminPanel({ showAlert }) {
   const [users, setUsers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [settings, setSettings] = useState([]);
-  
+
   // Modals / Details states
   const [selectedUserResponses, setSelectedUserResponses] = useState(null);
   const [selectedUserName, setSelectedUserName] = useState('');
-  
+
   // CRUD Helpers
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [userForm, setUserForm] = useState({ id: '', username: '', password: '', resetProgress: false });
-  
+
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const [questionForm, setQuestionForm] = useState({ id: '', round: 1, questionText: '', answer: '', points: 10, memorizeTime: 10, options: '', imagePath: '' });
   const [uploadFile, setUploadFile] = useState(null);
@@ -1196,7 +1194,7 @@ function AdminPanel({ showAlert }) {
   const handleSettingUpdate = async (roundNum, currentSecs) => {
     const newVal = window.prompt(`Enter new time limit in seconds for Round ${roundNum}:`, currentSecs);
     if (newVal === null) return;
-    
+
     const secs = parseInt(newVal);
     if (isNaN(secs) || secs <= 0) return showAlert('Please enter a valid positive number');
 
@@ -1258,13 +1256,13 @@ function AdminPanel({ showAlert }) {
 
         {/* Dynamic Panel Content */}
         <section className="glass-panel admin-content">
-          
+
           {/* TAB 1: SCOREBOARD */}
           {activeTab === 'scoreboard' && (
             <div className="fade-in">
               <h3 className="mb-4">Tournament Leaderboard</h3>
               <p>Scores are graded on correct responses. Ties resolved by fastest execution times.</p>
-              
+
               <div className="table-responsive">
                 <table className="custom-table">
                   <thead>
@@ -1485,7 +1483,7 @@ function AdminPanel({ showAlert }) {
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
             <button className="modal-close" onClick={() => setSelectedUserResponses(null)} aria-label="Close"><X aria-hidden="true" /></button>
             <h3 className="mb-4">Submission Audit: <span style={{ color: 'hsl(var(--secondary))' }}>{selectedUserName}</span></h3>
-            
+
             <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
               {selectedUserResponses.map((r, idx) => (
                 <div key={r._id} className="glass-card mb-4" style={{ padding: '16px', borderLeft: r.isCorrect ? '4px solid hsl(var(--success))' : '4px solid hsl(var(--danger))' }}>
@@ -1518,7 +1516,7 @@ function AdminPanel({ showAlert }) {
                 <p className="text-center" style={{ padding: '20px' }}>This user has not submitted any answers yet.</p>
               )}
             </div>
-            
+
             <div className="btn-group">
               <button className="btn btn-outline" onClick={() => setSelectedUserResponses(null)}>Close</button>
             </div>
@@ -1532,7 +1530,7 @@ function AdminPanel({ showAlert }) {
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setUserModalOpen(false)} aria-label="Close"><X aria-hidden="true" /></button>
             <h3>{userForm.id ? 'Modify Account' : 'New Participant Registration'}</h3>
-            
+
             <form onSubmit={handleSaveUser} style={{ marginTop: '20px' }}>
               <div className="form-group">
                 <label className="form-label">Username</label>
@@ -1593,7 +1591,7 @@ function AdminPanel({ showAlert }) {
           <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeQuestionModal} aria-label="Close"><X aria-hidden="true" /></button>
             <h3>{questionForm.id ? 'Modify Challenge' : 'New Challenge Definition'}</h3>
-            
+
             <form onSubmit={handleSaveQuestion} style={{ marginTop: '20px' }}>
               <div className="form-group">
                 <label className="form-label">Tournament Round</label>
@@ -1643,8 +1641,8 @@ function AdminPanel({ showAlert }) {
 
               <div className="form-group">
                 <label className="form-label">
-                  {questionForm.round === 1 ? 'Image Text Clue / Category' : 
-                   questionForm.round === 2 ? 'Sentence to Remember *' : 'Math Equation (e.g. 15 + 8 - 4) *'}
+                  {questionForm.round === 1 ? 'Image Text Clue / Category' :
+                    questionForm.round === 2 ? 'Sentence to Remember *' : 'Math Equation (e.g. 15 + 8 - 4) *'}
                 </label>
                 <input
                   type="text"
