@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '').replace(/\/(?:health|api)$/, '');
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
 const assetUrl = (path) => path?.startsWith('http') ? path : apiUrl(path || '');
 const API_DISPLAY_URL = API_BASE_URL || 'Local Vite proxy';
