@@ -34,6 +34,19 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Temporary endpoint to seed database on production
+app.get('/api/seed', async (req, res) => {
+  try {
+    const seed = require('./seed');
+    console.log('API Trigger: Seeding database...');
+    await seed(false); // Do not disconnect mongoose
+    res.json({ success: true, message: 'Database seeded successfully' });
+  } catch (error) {
+    console.error('API seed error:', error);
+    res.status(500).json({ error: error.message || 'Seeding failed' });
+  }
+});
+
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))

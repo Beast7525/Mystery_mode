@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
@@ -16,7 +17,7 @@ const placeholders = {
   'dog.png': 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAAF0lEQVR42u3BAQEAAACCIP+vbkhAAQAAAMgB4AA/AAF8mU4AAAAASUVORK5CYII='  // Purple
 };
 
-async function seed() {
+async function seed(shouldDisconnect = true) {
   try {
     console.log('Connecting to database...');
     await mongoose.connect(MONGODB_URI);
@@ -113,9 +114,15 @@ async function seed() {
   } catch (error) {
     console.error('Seeding failed:', error);
   } finally {
-    await mongoose.disconnect();
-    console.log('Database disconnected.');
+    if (shouldDisconnect) {
+      await mongoose.disconnect();
+      console.log('Database disconnected.');
+    }
   }
 }
 
-seed();
+if (require.main === module) {
+  seed(true);
+}
+
+module.exports = seed;
