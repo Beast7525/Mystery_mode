@@ -1402,7 +1402,6 @@ function AdminPanel({ showAlert }) {
                           {q.round === 1 ? (
                             <div className="asset-cell">
                               <MediaPreview src={q.imagePath} className="img-preview" alt="Question media thumbnail" />
-                              <span>Blurred in game, original on reveal</span>
                             </div>
                           ) : q.round === 2 ? (
                             <span>{q.memorizeTime}s Study Timer</span>
@@ -1629,10 +1628,6 @@ function AdminPanel({ showAlert }) {
                       <div>
                         <span>Player view</span>
                         <MediaPreview src={uploadPreviewUrl || questionForm.imagePath} className="img-preview-lg" mode="blurred" alt="Blurred upload preview" kindOverride={uploadFile?.type?.split('/')[0]} />
-                      </div>
-                      <div>
-                        <span>Original reveal</span>
-                        <MediaPreview src={uploadPreviewUrl || questionForm.imagePath} className="img-preview-lg" alt="Original upload preview" kindOverride={uploadFile?.type?.split('/')[0]} />
                       </div>
                     </div>
                   )}
