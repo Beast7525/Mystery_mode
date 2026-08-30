@@ -474,10 +474,10 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
 
   useEffect(() => {
     // Load setting first
-    fetch(apiUrl('/api/game/settings/1'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/game/settings/1?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl('/api/game/round/1'), { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl(`/api/game/round/1?t=${Date.now()}`), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -640,10 +640,10 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
 
   useEffect(() => {
     // Load setting first
-    fetch(apiUrl('/api/game/settings/2'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/game/settings/2?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl('/api/game/round/2'), { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl(`/api/game/round/2?t=${Date.now()}`), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -829,10 +829,10 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
   const startTime = useRef(Date.now());
 
   useEffect(() => {
-    fetch(apiUrl('/api/game/settings/3'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/game/settings/3?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl('/api/game/round/3'), { headers: getAuthHeaders() }))
+      .then(() => fetch(apiUrl(`/api/game/round/3?t=${Date.now()}`), { headers: getAuthHeaders() }))
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -1027,21 +1027,21 @@ function AdminPanel({ showAlert }) {
   const uploadPreviewRef = useRef('');
 
   const fetchScoreboard = () => {
-    fetch(apiUrl('/api/admin/users'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/admin/users?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setUsers(data.users || []))
       .catch(err => showAlert('Error loading scoreboard'));
   };
 
   const fetchQuestions = () => {
-    fetch(apiUrl('/api/admin/questions'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/admin/questions?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setQuestions(data.questions || []))
       .catch(err => showAlert('Error loading questions'));
   };
 
   const fetchSettings = () => {
-    fetch(apiUrl('/api/admin/settings'), { headers: getAuthHeaders() })
+    fetch(apiUrl(`/api/admin/settings?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => setSettings(data.settings || []))
       .catch(err => showAlert('Error loading timer settings'));
