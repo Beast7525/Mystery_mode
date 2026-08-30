@@ -218,12 +218,7 @@ function Header({ user, view, setView, handleLogout }) {
           </button>
         )}
 
-        {user?.role === 'user' && view !== 'home' && (
-          <button className="btn btn-outline btn-sm" onClick={() => setView('home')}>
-            <ButtonIcon icon={Home} />
-            Rounds Hub
-          </button>
-        )}
+       
 
         <button className="btn btn-danger" style={{ padding: '6px 14px', fontSize: '0.85rem' }} onClick={handleLogout}>
           <ButtonIcon icon={LogOut} />
@@ -1492,12 +1487,6 @@ function AdminPanel({ showAlert }) {
                       {r.isCorrect ? `Correct (+${r.pointsEarned} pts)` : 'Incorrect (0 pts)'}
                     </span>
                   </div>
-
-                  {r.questionId?.imagePath && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <MediaPreview src={r.questionId.imagePath} alt="Submission context" className="audit-media" />
-                    </div>
-                  )}
 
                   {r.questionId?.questionText && (
                     <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
