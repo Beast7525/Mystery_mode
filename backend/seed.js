@@ -62,8 +62,8 @@ async function seed(shouldDisconnect = true) {
     // Seed Round Settings
     const defaultSettings = [
       { round: 1, timeLimit: 300 }, // 5 mins
-      { round: 2, timeLimit: 300 }, // 5 mins
-      { round: 3, timeLimit: 180 }  // 3 mins
+      { round: 2, timeLimit: 1800 }, // 5 mins
+      { round: 3, timeLimit: 900 }  // 3 mins
     ];
     await RoundSetting.insertMany(defaultSettings);
     console.log('Seed: Default round settings inserted.');
