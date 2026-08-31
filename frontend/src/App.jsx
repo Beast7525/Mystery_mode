@@ -422,14 +422,25 @@ function Dashboard({ user, setView, setUser, showAlert }) {
 function useGameTimer(initialSeconds, onTimeout) {
   const [seconds, setSeconds] = useState(initialSeconds);
   const onTimeoutRef = useRef(onTimeout);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     onTimeoutRef.current = onTimeout;
   }, [onTimeout]);
 
   useEffect(() => {
-    if (seconds <= 0) {
-      onTimeoutRef.current();
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      return;
+    }
+    if (initialSeconds > 0) {
+      setSeconds(initialSeconds);
+    }
+  }, [initialSeconds]);
+
+  useEffect(() => {
+    if (seconds == null || seconds <= 0) {
+      if (seconds != null && seconds <= 0) onTimeoutRef.current();
       return;
     }
     const timer = setInterval(() => {
@@ -440,6 +451,7 @@ function useGameTimer(initialSeconds, onTimeout) {
   }, [seconds]);
 
   const formatTime = () => {
+    if (seconds == null) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -448,7 +460,7 @@ function useGameTimer(initialSeconds, onTimeout) {
   return {
     seconds,
     formatTime,
-    isWarning: seconds < 30
+    isWarning: seconds != null && seconds < 30
   };
 }
 
@@ -458,7 +470,7 @@ function useGameTimer(initialSeconds, onTimeout) {
 function Round1Challenge({ user, setView, setUser, showAlert }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [timeLimit, setTimeLimit] = useState(300);
+  const [timeLimit, setTimeLimit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -473,7 +485,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
         .then(res => res.json())
         .then(data => setTimeLimit(data.timeLimit || 300))
         .catch(() => {
-          // Ignore refresh errors on background polling; keep the current timer available.
+          if (timeLimit === null) setTimeLimit(300);
         });
     };
 
@@ -629,7 +641,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
 function Round2Challenge({ user, setView, setUser, showAlert }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [timeLimit, setTimeLimit] = useState(300);
+  const [timeLimit, setTimeLimit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -649,7 +661,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
         .then(res => res.json())
         .then(data => setTimeLimit(data.timeLimit || 300))
         .catch(() => {
-          // Ignore refresh errors during background polling.
+          if (timeLimit === null) setTimeLimit(300);
         });
     };
 
@@ -835,7 +847,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
 function Round3Challenge({ user, setView, setUser, showAlert }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [timeLimit, setTimeLimit] = useState(180);
+  const [timeLimit, setTimeLimit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -849,7 +861,7 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
         .then(res => res.json())
         .then(data => setTimeLimit(data.timeLimit || 180))
         .catch(() => {
-          // Ignore refresh errors during background polling.
+          if (timeLimit === null) setTimeLimit(180);
         });
     };
 
