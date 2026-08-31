@@ -1448,12 +1448,12 @@ function AdminPanel({ showAlert }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {settings.map(s => (
-                  <div key={s._id} className="glass-card flex-between" style={{ padding: '20px' }}>
+                  <div key={s._id} className="glass-card settings-row" style={{ padding: '20px' }}>
                     <div>
                       <strong style={{ fontSize: '1.1rem' }}>Round {s.round}</strong>
                       <p style={{ fontSize: '0.9rem' }}>Time limit constraints</p>
                     </div>
-                    <div className="flex-gap">
+                    <div className="settings-controls">
                       <span className="badge badge-primary" style={{ fontSize: '1rem', padding: '6px 12px' }}>
                         {s.timeLimit} seconds ({Math.floor(s.timeLimit / 60)}m {s.timeLimit % 60}s)
                       </span>

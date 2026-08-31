@@ -88,13 +88,23 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-const isAdmin = (req, res, next) => {
-  console.log('isAdmin Middleware Check:', req.user);
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    console.warn('isAdmin check failed. User role is not admin:', req.user ? req.user.role : 'undefined');
-    res.status(403).json({ error: 'Access denied: Admin privileges required' });
+const isAdmin = async (req, res, next) => {
+  try {
+    console.log('isAdmin Middleware Check:', req.user);
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const dbUser = await User.findById(req.user.id).select('role');
+    if (dbUser && dbUser.role === 'admin') {
+      return next();
+    }
+
+    console.warn('isAdmin check failed. DB user role is not admin:', dbUser ? dbUser.role : 'undefined');
+    return res.status(403).json({ error: 'Access denied: Admin privileges required' });
+  } catch (error) {
+    console.error('isAdmin error:', error);
+    return res.status(500).json({ error: 'Server error while checking admin access' });
   }
 };
 
@@ -388,20 +398,29 @@ app.get('/api/admin/settings', authenticateJWT, isAdmin, async (req, res) => {
 // Update round timers
 app.put('/api/admin/settings/:roundNum', authenticateJWT, isAdmin, async (req, res) => {
   try {
-    const roundNum = parseInt(req.params.roundNum);
-    const { timeLimit } = req.body;
-    if (!timeLimit || timeLimit <= 0) {
+    const roundNum = parseInt(req.params.roundNum, 10);
+    const parsedTimeLimit = Number(req.body?.timeLimit);
+
+    if (![1, 2, 3].includes(roundNum)) {
+      return res.status(400).json({ error: 'Invalid round number' });
+    }
+
+    if (!Number.isFinite(parsedTimeLimit) || parsedTimeLimit <= 0) {
       return res.status(400).json({ error: 'Time limit must be a positive number' });
     }
 
-    const updated = await RoundSetting.findOneAndUpdate(
-      { round: roundNum },
-      { timeLimit },
-      { new: true, upsert: true }
-    );
-    res.json({ success: true, setting: updated });
+    let setting = await RoundSetting.findOne({ round: roundNum });
+    if (!setting) {
+      setting = new RoundSetting({ round: roundNum, timeLimit: parsedTimeLimit });
+    } else {
+      setting.timeLimit = parsedTimeLimit;
+    }
+
+    const updated = await setting.save();
+    return res.json({ success: true, setting: updated });
   } catch (error) {
-    res.status(500).json({ error: 'Server error updating settings' });
+    console.error('Admin settings update error:', error);
+    return res.status(500).json({ error: 'Server error updating settings' });
   }
 });
 
