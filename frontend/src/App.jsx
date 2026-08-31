@@ -468,11 +468,18 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
   const startTime = useRef(Date.now());
 
   useEffect(() => {
+    const loadSettings = () => {
+      fetch(apiUrl(`/api/game/settings/1?t=${Date.now()}`), { headers: getAuthHeaders() })
+        .then(res => res.json())
+        .then(data => setTimeLimit(data.timeLimit || 300))
+        .catch(() => {
+          // Ignore refresh errors on background polling; keep the current timer available.
+        });
+    };
+
     // Load setting first
-    fetch(apiUrl(`/api/game/settings/1?t=${Date.now()}`), { headers: getAuthHeaders() })
-      .then(res => res.json())
-      .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl(`/api/game/round/1?t=${Date.now()}`), { headers: getAuthHeaders() }))
+    loadSettings();
+    fetch(apiUrl(`/api/game/round/1?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -487,6 +494,9 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
         showAlert('Failed to load Round 1 challenges');
         setView('home');
       });
+
+    const timerRefresh = setInterval(loadSettings, 10000);
+    return () => clearInterval(timerRefresh);
   }, []);
 
   const submitGame = async (forcedAnswers = null) => {
@@ -634,11 +644,18 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
   const timerIntervalRef = useRef(null);
 
   useEffect(() => {
+    const loadSettings = () => {
+      fetch(apiUrl(`/api/game/settings/2?t=${Date.now()}`), { headers: getAuthHeaders() })
+        .then(res => res.json())
+        .then(data => setTimeLimit(data.timeLimit || 300))
+        .catch(() => {
+          // Ignore refresh errors during background polling.
+        });
+    };
+
     // Load setting first
-    fetch(apiUrl(`/api/game/settings/2?t=${Date.now()}`), { headers: getAuthHeaders() })
-      .then(res => res.json())
-      .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl(`/api/game/round/2?t=${Date.now()}`), { headers: getAuthHeaders() }))
+    loadSettings();
+    fetch(apiUrl(`/api/game/round/2?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -653,6 +670,9 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
         showAlert('Failed to load Round 2 challenges');
         setView('home');
       });
+
+    const timerRefresh = setInterval(loadSettings, 10000);
+    return () => clearInterval(timerRefresh);
   }, []);
 
   // Manage individual question memorization timers
@@ -824,10 +844,17 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
   const startTime = useRef(Date.now());
 
   useEffect(() => {
-    fetch(apiUrl(`/api/game/settings/3?t=${Date.now()}`), { headers: getAuthHeaders() })
-      .then(res => res.json())
-      .then(data => setTimeLimit(data.timeLimit))
-      .then(() => fetch(apiUrl(`/api/game/round/3?t=${Date.now()}`), { headers: getAuthHeaders() }))
+    const loadSettings = () => {
+      fetch(apiUrl(`/api/game/settings/3?t=${Date.now()}`), { headers: getAuthHeaders() })
+        .then(res => res.json())
+        .then(data => setTimeLimit(data.timeLimit || 180))
+        .catch(() => {
+          // Ignore refresh errors during background polling.
+        });
+    };
+
+    loadSettings();
+    fetch(apiUrl(`/api/game/round/3?t=${Date.now()}`), { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setQuestions(data.questions || []);
@@ -841,6 +868,9 @@ function Round3Challenge({ user, setView, setUser, showAlert }) {
         showAlert('Failed to load Round 3 challenges');
         setView('home');
       });
+
+    const timerRefresh = setInterval(loadSettings, 10000);
+    return () => clearInterval(timerRefresh);
   }, []);
 
   const submitGame = async (forcedAnswers = null) => {
