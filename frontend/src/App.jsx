@@ -1390,7 +1390,7 @@ function AdminPanel({ showAlert }) {
                         <td><span className="badge badge-secondary">R{q.round}</span></td>
                         <td>
                           <div style={{ maxWidth: '300px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                            {q.questionText || '(No text clue)'}
+                            {q.round === 2 ? 'n/a' : (q.questionText || '(No text clue)')}
                           </div>
                         </td>
                         <td>
