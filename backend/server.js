@@ -344,11 +344,13 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
 
       let isCorrect = false;
       let pointsEarned = 0;
+      let errorCount = 0;
 
       if (roundNum === 2) {
         // Round 2: Memory Challenge - Character-by-character deduction
         // Measure character differences (Levenshtein distance)
         const wrongChars = getLevenshteinDistance(submitted, correct);
+        errorCount = wrongChars;
         isCorrect = (wrongChars === 0);
 
         if (wrongChars >= 10) {
@@ -358,8 +360,6 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
         }
       } else if (roundNum === 3) {
         // Round 3: Formula Challenge (a - b*c/d) = e
-        // submitted is "a,b,c,d" comma-separated values
-        // questionText is the target number (e)
         const targetNumber = parseFloat(question.questionText);
         const parts = submitted.split(',').map(s => parseFloat(s.trim()));
         if (parts.length === 4 && parts.every(n => !isNaN(n)) && parts[3] !== 0) {
@@ -367,14 +367,15 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
           const result = a - (b * c / d);
           isCorrect = Math.abs(result - targetNumber) < 0.0001;
         }
-        // Also accept exact string match with stored answer
         if (!isCorrect) {
           isCorrect = submitted.replace(/\s+/g, '') === correct.replace(/\s+/g, '');
         }
+        errorCount = isCorrect ? 0 : getLevenshteinDistance(submitted, correct);
         pointsEarned = isCorrect ? question.points : 0;
       } else {
         // Round 1: Case-insensitive comparison
         isCorrect = submitted.toLowerCase() === correct.toLowerCase();
+        errorCount = isCorrect ? 0 : getLevenshteinDistance(submitted, correct);
         pointsEarned = isCorrect ? question.points : 0;
       }
 
@@ -386,7 +387,8 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
         round: roundNum,
         submittedAnswer: submitted,
         isCorrect,
-        pointsEarned
+        pointsEarned,
+        errorCount
       });
     }
 

@@ -44,6 +44,35 @@ const getMediaKind = (path = '') => {
   return 'image';
 };
 
+const getLevenshteinDistance = (a, b) => {
+  const str1 = a || '';
+  const str2 = b || '';
+  const matrix = [];
+
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[str2.length][str1.length];
+};
+
 function ButtonIcon({ icon: Icon }) {
   return Icon ? <Icon aria-hidden="true" className="btn-icon" /> : null;
 }
@@ -1127,11 +1156,23 @@ function AdminPanel({ showAlert }) {
       .catch(err => showAlert('Error loading timer settings'));
   };
 
-  // Export report in Word 97-2003 (.doc) format with 6 columns: Name, Roll No(password), round1, round2, round3, total
+  // Export report in Word 97-2003 (.doc) format: Page 1 Winners Table, Page 2 Score Report Table, Staff sign on right bottom of each page
   const exportDocReport = () => {
     if (!users || users.length === 0) {
       return showAlert('No user data available for export.');
     }
+
+    // Sort users for winners (highest score first, then fastest execution time)
+    const sortedUsers = [...users].sort((a, b) => {
+      if ((b.totalScore || 0) !== (a.totalScore || 0)) {
+        return (b.totalScore || 0) - (a.totalScore || 0);
+      }
+      return (a.totalTime || 0) - (b.totalTime || 0);
+    });
+
+    const firstWinner = sortedUsers[0]?.username || '-';
+    const secondWinner = sortedUsers[1]?.username || '-';
+    const thirdWinner = sortedUsers[2]?.username || '-';
 
     const tableRowsHtml = users.map(u => {
       const name = u.username || '';
@@ -1157,7 +1198,7 @@ function AdminPanel({ showAlert }) {
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <meta charset='utf-8'>
-        <title>Tournament Report 97-2003</title>
+        <title>Tournament Report</title>
         <!--[if gte mso 9]>
         <xml>
           <w:WordDocument>
@@ -1169,15 +1210,16 @@ function AdminPanel({ showAlert }) {
         <![endif]-->
         <style>
           @page {
+            size: 8.5in 11in;
             margin: 1in;
           }
-          body, table, th, td, p, h2 {
+          body, table, th, td, p, div, h2 {
             font-family: 'Times New Roman', Times, serif !important;
             color: #000000;
           }
           body {
             font-size: 12pt;
-            line-height: 1.25;
+            line-height: 1.3;
           }
           h2 {
             text-align: center;
@@ -1203,9 +1245,50 @@ function AdminPanel({ showAlert }) {
             border: 1px solid #000000;
             padding: 8px;
           }
+          .sign-block {
+            margin-top: 250px;
+            text-align: right;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            font-weight: bold;
+          }
         </style>
       </head>
       <body>
+        <!-- PAGE 1: WINNERS TABLE -->
+        <h2>Mystery Mode Tournament Winners</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt; width:35%;">Winner</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt;">Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; font-weight:bold;">First</td>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt;">${firstWinner}</td>
+            </tr>
+            <tr>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; font-weight:bold;">Second</td>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt;">${secondWinner}</td>
+            </tr>
+            <tr>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; font-weight:bold;">Third</td>
+              <td style="font-family:'Times New Roman', Times, serif; font-size:12pt;">${thirdWinner}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sign-block">
+          Staff's Sign: ____________________
+        </div>
+
+        <!-- PAGE BREAK -->
+        <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
+        <div style="page-break-before:always;"></div>
+
+        <!-- PAGE 2: SCORE REPORT TABLE -->
         <h2>Mystery Mode Tournament Score Report</h2>
         <table>
           <thead>
@@ -1222,6 +1305,10 @@ function AdminPanel({ showAlert }) {
             ${tableRowsHtml}
           </tbody>
         </table>
+
+        <div class="sign-block" style="margin-top: 150px;">
+          Staff's Sign: ____________________
+        </div>
       </body>
       </html>
     `;
@@ -1692,6 +1779,11 @@ function AdminPanel({ showAlert }) {
                 const hasPoints = (r.pointsEarned || 0) > 0;
                 const isExact = !!r.isCorrect;
 
+                const correctTarget = r.questionId?.answer || r.questionId?.questionText || '';
+                const errCount = r.errorCount !== undefined
+                  ? r.errorCount
+                  : getLevenshteinDistance((r.submittedAnswer || '').trim(), (correctTarget || '').trim());
+
                 return (
                   <div
                     key={r._id}
@@ -1720,13 +1812,17 @@ function AdminPanel({ showAlert }) {
                     </div>
 
                     {r.questionId?.questionText && (
-                      <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
+                      <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>
                         <strong>Question/Clue:</strong> "{r.questionId.questionText}"
                       </p>
                     )}
 
-                    <p style={{ fontSize: '0.9rem' }}>
+                    <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>
                       <strong>User Submitted:</strong> <code style={{ color: hasPoints ? (isExact ? 'hsl(var(--success))' : 'hsl(var(--secondary))') : 'hsl(var(--danger))' }}>"{r.submittedAnswer}"</code>
+                    </p>
+
+                    <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', marginTop: '6px' }}>
+                      <strong>Character Errors:</strong> <span style={{ color: errCount === 0 ? 'hsl(var(--success))' : errCount < 10 ? 'hsl(var(--secondary))' : 'hsl(var(--danger))', fontWeight: 'bold' }}>{errCount} mismatch(es)</span>
                     </p>
                   </div>
                 );

@@ -59,7 +59,8 @@ const userResponseSchema = new mongoose.Schema({
   round: { type: Number, required: true },
   submittedAnswer: { type: String, default: '' },
   isCorrect: { type: Boolean, default: false },
-  pointsEarned: { type: Number, default: 0 }
+  pointsEarned: { type: Number, default: 0 },
+  errorCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
