@@ -1099,3 +1099,12 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+/* Copy & Selection Restriction Utilities */
+.no-select {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+

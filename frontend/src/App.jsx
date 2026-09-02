@@ -3,6 +3,7 @@ import {
   BarChart3,
   CheckCircle2,
   Clock3,
+  Download,
   FileQuestion,
   Gauge,
   Home,
@@ -793,8 +794,26 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
           </div>
 
           {isMemorizing ? (
-            <div className="memory-viewer">
-              <p className="sentence-display">"{currentQuestion.questionText}"</p>
+            <div
+              className="memory-viewer no-select"
+              style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+              onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onPaste={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+              onSelectStart={(e) => e.preventDefault()}
+            >
+              <p
+                className="sentence-display no-select"
+                style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                onPaste={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                "{currentQuestion.questionText}"
+              </p>
               <div className="memorize-timer-ring">
                 ⏱️ Memorize this! ({memorizeSeconds}s)
               </div>
@@ -814,11 +833,12 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
                 placeholder="Type the exact sentence here..."
                 value={typedSentence}
                 onChange={(e) => setTypedSentence(e.target.value)}
+                onPaste={(e) => e.preventDefault()}
                 disabled={submitting}
                 style={{ resize: 'none' }}
               />
               <p style={{ fontSize: '0.8rem', marginTop: '4px', color: 'hsl(var(--text-muted))' }}>
-                Note: Check spelling, punctuation, and casing!
+                Note: Check spelling, punctuation, and casing! (Pasting disabled)
               </p>
             </div>
           )}
@@ -1084,6 +1104,90 @@ function AdminPanel({ showAlert }) {
       .catch(err => showAlert('Error loading timer settings'));
   };
 
+  // Export report in Word 97-2003 (.doc) format with 6 columns: Name, Roll No(password), round1, round2, round3, total
+  const exportDocReport = () => {
+    if (!users || users.length === 0) {
+      return showAlert('No user data available for export.');
+    }
+
+    const tableRowsHtml = users.map(u => {
+      const name = u.username || '';
+      const rollNoPassword = u.username || '';
+      const r1 = u.scores?.round1 ?? 0;
+      const r2 = u.scores?.round2 ?? 0;
+      const r3 = u.scores?.round3 ?? 0;
+      const total = u.totalScore ?? (r1 + r2 + r3);
+
+      return `
+        <tr>
+          <td style="border:1px solid #000; padding:8px;">${name}</td>
+          <td style="border:1px solid #000; padding:8px;">${rollNoPassword}</td>
+          <td style="border:1px solid #000; padding:8px; text-align:center;">${r1}</td>
+          <td style="border:1px solid #000; padding:8px; text-align:center;">${r2}</td>
+          <td style="border:1px solid #000; padding:8px; text-align:center;">${r3}</td>
+          <td style="border:1px solid #000; padding:8px; text-align:center; font-weight:bold;">${total}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const docHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Tournament Report 97-2003</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+          h2 { text-align: center; color: #1e3a8a; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th { background-color: #2563eb; color: #ffffff; border: 1px solid #000000; padding: 10px; font-weight: bold; text-align: left; }
+          td { border: 1px solid #000000; padding: 8px; }
+        </style>
+      </head>
+      <body>
+        <h2>Mystery Mode Tournament Score Report</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Roll No(password)</th>
+              <th style="text-align:center;">round1</th>
+              <th style="text-align:center;">round2</th>
+              <th style="text-align:center;">round3</th>
+              <th style="text-align:center;">total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff', docHtml], {
+      type: 'application/msword'
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Tournament_Report_97-2003.doc';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showAlert('Tournament report exported in Word 97-2003 (.doc) format!', 'success');
+  };
+
   // Sync data based on active tab
   useEffect(() => {
     if (activeTab === 'scoreboard' || activeTab === 'users') {
@@ -1297,8 +1401,16 @@ function AdminPanel({ showAlert }) {
           {/* TAB 1: SCOREBOARD */}
           {activeTab === 'scoreboard' && (
             <div className="fade-in">
-              <h3 className="mb-4">Tournament Leaderboard</h3>
-              <p>Scores are graded on correct responses. Ties resolved by fastest execution times.</p>
+              <div className="flex-between mb-4">
+                <div>
+                  <h3 style={{ marginBottom: '4px' }}>Tournament Leaderboard</h3>
+                  <p style={{ margin: 0 }}>Scores are graded on correct responses. Ties resolved by fastest execution times.</p>
+                </div>
+                <button className="btn btn-secondary" onClick={exportDocReport}>
+                  <ButtonIcon icon={Download} />
+                  Export Report (.doc)
+                </button>
+              </div>
 
               <div className="table-responsive">
                 <table className="custom-table">

@@ -122,6 +122,36 @@ function evaluateMathExpression(expr) {
   }
 }
 
+// Levenshtein distance helper to measure character differences
+function getLevenshteinDistance(a, b) {
+  const str1 = a || '';
+  const str2 = b || '';
+  const matrix = [];
+
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+
+  return matrix[str2.length][str1.length];
+}
+
 // ==========================================
 // Auth Routes
 // ==========================================
@@ -312,7 +342,20 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
       const correct = question.answer.trim();
 
       let isCorrect = false;
-      if (roundNum === 3) {
+      let pointsEarned = 0;
+
+      if (roundNum === 2) {
+        // Round 2: Memory Challenge - Character-by-character deduction
+        // Measure character differences (Levenshtein distance)
+        const wrongChars = getLevenshteinDistance(submitted, correct);
+        isCorrect = (wrongChars === 0);
+
+        if (wrongChars >= 10) {
+          pointsEarned = 0; // If 10 or more wrong characters, points for the question is marked as 0
+        } else {
+          pointsEarned = Math.max(0, question.points - wrongChars);
+        }
+      } else if (roundNum === 3) {
         // Round 3: Formula Challenge (a - b*c/d) = e
         // submitted is "a,b,c,d" comma-separated values
         // questionText is the target number (e)
@@ -320,23 +363,21 @@ app.post('/api/game/submit/:roundNum', authenticateJWT, async (req, res) => {
         const parts = submitted.split(',').map(s => parseFloat(s.trim()));
         if (parts.length === 4 && parts.every(n => !isNaN(n)) && parts[3] !== 0) {
           const [a, b, c, d] = parts;
-          const result = a- (b * c / d);
+          const result = a - (b * c / d);
           isCorrect = Math.abs(result - targetNumber) < 0.0001;
         }
         // Also accept exact string match with stored answer
         if (!isCorrect) {
           isCorrect = submitted.replace(/\s+/g, '') === correct.replace(/\s+/g, '');
         }
+        pointsEarned = isCorrect ? question.points : 0;
       } else {
-        // Case-insensitive comparisons for simplicity & fairness
+        // Round 1: Case-insensitive comparison
         isCorrect = submitted.toLowerCase() === correct.toLowerCase();
+        pointsEarned = isCorrect ? question.points : 0;
       }
 
-      const pointsEarned = isCorrect ? question.points : 0;
-
-      if (isCorrect) {
-        roundScore += pointsEarned;
-      }
+      roundScore += pointsEarned;
 
       responseLogs.push({
         userId: dbUser._id,
