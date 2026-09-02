@@ -175,6 +175,7 @@ app.post('/api/auth/register', async (req, res) => {
     const newUser = await User.create({
       username: username.trim(),
       password: hashedPassword,
+      rawPassword: password,
       role: 'user',
       unlockedRound: 1
     });
@@ -494,6 +495,7 @@ app.post('/api/admin/users', authenticateJWT, isAdmin, async (req, res) => {
     const newUser = await User.create({
       username: username.trim(),
       password: hashedPassword,
+      rawPassword: password,
       role: 'user',
       unlockedRound: 1
     });
@@ -524,6 +526,7 @@ app.put('/api/admin/users/:userId', authenticateJWT, isAdmin, async (req, res) =
     if (password && password.trim() !== '') {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
+      user.rawPassword = password;
     }
 
     if (resetProgress) {
@@ -662,7 +665,7 @@ app.put('/api/admin/questions/:questionId', authenticateJWT, isAdmin, upload.sin
       question.options = optionsArray;
     }
 
-    if (req.file && question.round === 1) {
+    if (req.file && Number(question.round) === 1) {
       // Delete old file if it exists
       if (question.imagePath) {
         const oldFilePath = path.join(__dirname, question.imagePath);

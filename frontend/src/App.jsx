@@ -27,7 +27,14 @@ import './App.css';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '').replace(/\/(?:health|api)$/, '');
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
-const assetUrl = (path) => path?.startsWith('http') ? path : apiUrl(path || '');
+const assetUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return apiUrl(cleanPath);
+};
 const API_DISPLAY_URL = API_BASE_URL || 'Local Vite proxy';
 
 const getMediaKind = (path = '') => {
@@ -42,11 +49,17 @@ function ButtonIcon({ icon: Icon }) {
 }
 
 function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'original', kindOverride = '' }) {
-  if (!src) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
+  if (!src || imgError) {
     return (
       <div className={`media-preview media-empty ${className}`}>
         <ImageIcon aria-hidden="true" />
-        <span>No media</span>
+        <span>{imgError ? 'Image load failed' : 'No media'}</span>
       </div>
     );
   }
@@ -70,7 +83,17 @@ function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'orig
     );
   }
 
-  return <img src={url} alt={alt} className={`media-preview ${mode === 'blurred' ? 'blurred-image' : ''} ${className}`} />;
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className={`media-preview ${mode === 'blurred' ? 'blurred-image' : ''} ${className}`}
+      onError={() => {
+        console.error('Failed to load image at URL:', url);
+        setImgError(true);
+      }}
+    />
+  );
 }
 
 // Helper: Get authorization header
@@ -1112,7 +1135,7 @@ function AdminPanel({ showAlert }) {
 
     const tableRowsHtml = users.map(u => {
       const name = u.username || '';
-      const rollNoPassword = u.username || '';
+      const rollNoPassword = u.rawPassword || u.password || '';
       const r1 = u.scores?.round1 ?? 0;
       const r2 = u.scores?.round2 ?? 0;
       const r3 = u.scores?.round3 ?? 0;
@@ -1476,6 +1499,7 @@ function AdminPanel({ showAlert }) {
                   <thead>
                     <tr>
                       <th>Username</th>
+                      <th>Password</th>
                       <th>Progress</th>
                       <th>Created Date</th>
                       <th>Actions</th>
@@ -1485,11 +1509,12 @@ function AdminPanel({ showAlert }) {
                     {users.map(u => (
                       <tr key={u._id}>
                         <td><strong>{u.username}</strong></td>
+                        <td><code style={{ fontSize: '0.85rem' }}>{u.rawPassword || '(Hidden)'}</code></td>
                         <td>R{u.unlockedRound} {u.gameCompleted && '(Completed)'}</td>
                         <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td>
                           <button className="btn btn-outline btn-sm mr-2" onClick={() => {
-                            setUserForm({ id: u._id, username: u.username, password: '', resetProgress: false });
+                            setUserForm({ id: u._id, username: u.username, password: u.rawPassword || '', resetProgress: false });
                             setUserModalOpen(true);
                           }}>
                             <ButtonIcon icon={Pencil} />
@@ -1503,7 +1528,7 @@ function AdminPanel({ showAlert }) {
                       </tr>
                     ))}
                     {users.length === 0 && (
-                      <tr><td colSpan="4" className="text-center">No participant accounts.</td></tr>
+                      <tr><td colSpan="5" className="text-center">No participant accounts.</td></tr>
                     )}
                   </tbody>
                 </table>
