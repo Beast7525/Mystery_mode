@@ -25,7 +25,12 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '').replace(/\/(?:health|api)$/, '');
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:5000'
+    : '')
+).trim().replace(/\/$/, '').replace(/\/(?:health|api)$/, '');
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
 const assetUrl = (path) => {
   if (!path) return '';
@@ -88,9 +93,6 @@ function useDisableRefresh(showAlert) {
       ) {
         e.preventDefault();
         e.stopPropagation();
-        if (showAlert) {
-          showAlert('Page refresh (F5 / Ctrl+R) is disabled during active round challenges.', 'danger');
-        }
         return false;
       }
     };
@@ -112,35 +114,56 @@ function useDisableRefresh(showAlert) {
 }
 
 function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'original', kindOverride = '' }) {
-  const [imgError, setImgError] = useState(false);
-  const [retryPort, setRetryPort] = useState(false);
+  const [retryIndex, setRetryIndex] = useState(0);
 
   useEffect(() => {
-    setImgError(false);
-    setRetryPort(false);
+    setRetryIndex(0);
   }, [src]);
 
-  if (!src || imgError) {
+  if (!src) {
     return (
       <div className={`media-preview media-empty ${className}`}>
         <ImageIcon aria-hidden="true" />
-        <span>{imgError ? 'Image load failed' : 'No media'}</span>
+        <span>No media</span>
       </div>
     );
   }
 
-  const baseUrl = assetUrl(src);
-  const cleanPath = src && !src.startsWith('http') && !src.startsWith('blob:') && !src.startsWith('data:')
+  const cleanPath = (src && !src.startsWith('http') && !src.startsWith('blob:') && !src.startsWith('data:'))
     ? (src.startsWith('/') ? src : `/${src}`)
     : null;
 
-  const url = (retryPort && cleanPath) ? `http://127.0.0.1:5000${cleanPath}` : baseUrl;
+  const candidateUrls = [];
+  const primaryUrl = assetUrl(src);
+  if (primaryUrl) candidateUrls.push(primaryUrl);
+
+  if (cleanPath) {
+    const direct127 = `http://127.0.0.1:5000${cleanPath}`;
+    const directLocalhost = `http://localhost:5000${cleanPath}`;
+    const originUrl = typeof window !== 'undefined' ? `${window.location.origin}${cleanPath}` : cleanPath;
+
+    if (!candidateUrls.includes(originUrl)) candidateUrls.push(originUrl);
+    if (!candidateUrls.includes(direct127)) candidateUrls.push(direct127);
+    if (!candidateUrls.includes(directLocalhost)) candidateUrls.push(directLocalhost);
+  }
+
+  const isFailed = retryIndex >= candidateUrls.length;
+  if (isFailed) {
+    return (
+      <div className={`media-preview media-empty ${className}`}>
+        <ImageIcon aria-hidden="true" />
+        <span>Image load failed</span>
+      </div>
+    );
+  }
+
+  const currentUrl = candidateUrls[retryIndex] || candidateUrls[0];
   const kind = kindOverride || getMediaKind(src);
 
   if (kind === 'video') {
     return (
       <video className={`media-preview ${className}`} controls playsInline preload="metadata">
-        <source src={url} />
+        <source src={currentUrl} />
       </video>
     );
   }
@@ -148,24 +171,19 @@ function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'orig
   if (kind === 'audio') {
     return (
       <div className={`media-preview audio-preview ${className}`}>
-        <audio controls src={url} />
+        <audio controls src={currentUrl} />
       </div>
     );
   }
 
   return (
     <img
-      src={url}
+      src={currentUrl}
       alt={alt}
       className={`media-preview ${mode === 'blurred' ? 'blurred-image' : ''} ${className}`}
       onError={() => {
-        if (!retryPort && cleanPath) {
-          console.warn('Initial image load failed, retrying directly with backend port:', baseUrl);
-          setRetryPort(true);
-        } else {
-          console.error('Failed to load image at URL:', url);
-          setImgError(true);
-        }
+        console.warn(`MediaPreview: failed loading [${currentUrl}]. Trying fallback ${retryIndex + 1}/${candidateUrls.length}`);
+        setRetryIndex(prev => prev + 1);
       }}
     />
   );
