@@ -74,8 +74,8 @@ async function seed(shouldDisconnect = true) {
       { round: 1, questionText: '', imagePath: '/uploads/image1.jpeg', answer: 'Thamizh Padam 2', options: ['Vikram Vadha', 'Singam 3', 'Thamizh Padam 2', ''], points: 10 },
       { round: 1, questionText: '', imagePath: '/uploads/image2.jpeg', answer: 'Seashore', options: ['Field', 'Mountain', 'Desert', 'Seashore'], points: 10 },
       { round: 1, questionText: '', imagePath: '/uploads/image3.jpeg', answer: 'Elephant', options: ['Cat', 'Dog', 'Bird', 'Elephant'], points: 10 },
-      { round: 1, questionText: '', imagePath: '/uploads/cat.png', answer: 'Cat', options: ['dog', 'rabbit', 'hamster', 'Cat'], points: 10 },
-      { round: 1, questionText: '', imagePath: '/uploads/dog.png', answer: 'dog', options: ['cat', 'dog', 'parrot', 'horse'], points: 10 },
+      { round: 1, questionText: '', imagePath: '/uploads/image5.png', answer: 'Cat', options: ['dog', 'rabbit', 'hamster', 'Cat'], points: 10 },
+      { round: 1, questionText: '', imagePath: '/uploads/image4.png', answer: 'dog', options: ['cat', 'dog', 'parrot', 'horse'], points: 10 },
 
       // Round 2 (Memory Challenge)
       { round: 2, questionText: 'The quick brown fox jumps over the lazy dog.', answer: 'The quick brown fox jumps over the lazy dog.', points: 15, memorizeTime: 10 },
