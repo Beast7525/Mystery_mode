@@ -1,5 +1,11 @@
 const dns = require('dns');
-dns.setServers(['8.8.8.8']); // Override DNS servers to resolve Atlas querySrv ECONNREFUSED errors on Windows
+if (process.env.MONGODB_URI && process.env.MONGODB_URI.includes('mongodb+srv')) {
+  try {
+    dns.setServers(['8.8.8.8']); // Override DNS servers to resolve Atlas querySrv ECONNREFUSED errors on Windows
+  } catch (e) {
+    console.warn('Custom DNS set failed:', e.message);
+  }
+}
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -725,6 +731,6 @@ app.use((err, req, res, next) => {
 });
 
 // Run server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -77,11 +77,47 @@ function ButtonIcon({ icon: Icon }) {
   return Icon ? <Icon aria-hidden="true" className="btn-icon" /> : null;
 }
 
+// Custom hook to disable F5, Ctrl+R, Cmd+R and warn on page reload during active round challenges
+function useDisableRefresh(showAlert) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (
+        e.key === 'F5' ||
+        e.keyCode === 116 ||
+        ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R' || e.keyCode === 82))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (showAlert) {
+          showAlert('Page refresh (F5 / Ctrl+R) is disabled during active round challenges.', 'danger');
+        }
+        return false;
+      }
+    };
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = 'Refreshing will interrupt your active round challenge. Are you sure you want to leave?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [showAlert]);
+}
+
 function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'original', kindOverride = '' }) {
   const [imgError, setImgError] = useState(false);
+  const [retryPort, setRetryPort] = useState(false);
 
   useEffect(() => {
     setImgError(false);
+    setRetryPort(false);
   }, [src]);
 
   if (!src || imgError) {
@@ -93,7 +129,12 @@ function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'orig
     );
   }
 
-  const url = assetUrl(src);
+  const baseUrl = assetUrl(src);
+  const cleanPath = src && !src.startsWith('http') && !src.startsWith('blob:') && !src.startsWith('data:')
+    ? (src.startsWith('/') ? src : `/${src}`)
+    : null;
+
+  const url = (retryPort && cleanPath) ? `http://127.0.0.1:5000${cleanPath}` : baseUrl;
   const kind = kindOverride || getMediaKind(src);
 
   if (kind === 'video') {
@@ -118,8 +159,13 @@ function MediaPreview({ src, alt = 'Media preview', className = '', mode = 'orig
       alt={alt}
       className={`media-preview ${mode === 'blurred' ? 'blurred-image' : ''} ${className}`}
       onError={() => {
-        console.error('Failed to load image at URL:', url);
-        setImgError(true);
+        if (!retryPort && cleanPath) {
+          console.warn('Initial image load failed, retrying directly with backend port:', baseUrl);
+          setRetryPort(true);
+        } else {
+          console.error('Failed to load image at URL:', url);
+          setImgError(true);
+        }
       }}
     />
   );
@@ -521,6 +567,7 @@ function useGameTimer(initialSeconds, onTimeout) {
 // 5. Round 1: Blurred Pictures Component
 // ==========================================
 function Round1Challenge({ user, setView, setUser, showAlert }) {
+  useDisableRefresh(showAlert);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [timeLimit, setTimeLimit] = useState(null);
@@ -692,6 +739,7 @@ function Round1Challenge({ user, setView, setUser, showAlert }) {
 // 6. Round 2: Memory Challenge Component
 // ==========================================
 function Round2Challenge({ user, setView, setUser, showAlert }) {
+  useDisableRefresh(showAlert);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [timeLimit, setTimeLimit] = useState(null);
@@ -917,6 +965,7 @@ function Round2Challenge({ user, setView, setUser, showAlert }) {
 // 7. Round 3: Math Challenge Component
 // ==========================================
 function Round3Challenge({ user, setView, setUser, showAlert }) {
+  useDisableRefresh(showAlert);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [timeLimit, setTimeLimit] = useState(null);
