@@ -679,6 +679,7 @@ p {
   padding: 40px 30px;
   margin-bottom: 30px;
   position: relative;
+  cursor:not-allowed;
 }
 
 .sentence-display {
