@@ -1143,12 +1143,12 @@ function AdminPanel({ showAlert }) {
 
       return `
         <tr>
-          <td style="border:1px solid #000; padding:8px;">${name}</td>
-          <td style="border:1px solid #000; padding:8px;">${rollNoPassword}</td>
-          <td style="border:1px solid #000; padding:8px; text-align:center;">${r1}</td>
-          <td style="border:1px solid #000; padding:8px; text-align:center;">${r2}</td>
-          <td style="border:1px solid #000; padding:8px; text-align:center;">${r3}</td>
-          <td style="border:1px solid #000; padding:8px; text-align:center; font-weight:bold;">${total}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px;">${name}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px;">${rollNoPassword}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px; text-align:center;">${r1}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px; text-align:center;">${r2}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px; text-align:center;">${r3}</td>
+          <td style="font-family:'Times New Roman', Times, serif; font-size:12pt; border:1px solid #000000; padding:8px; text-align:center; font-weight:bold;">${total}</td>
         </tr>
       `;
     }).join('');
@@ -1168,11 +1168,41 @@ function AdminPanel({ showAlert }) {
         </xml>
         <![endif]-->
         <style>
-          body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-          h2 { text-align: center; color: #1e3a8a; margin-bottom: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th { background-color: #2563eb; color: #ffffff; border: 1px solid #000000; padding: 10px; font-weight: bold; text-align: left; }
-          td { border: 1px solid #000000; padding: 8px; }
+          @page {
+            margin: 1in;
+          }
+          body, table, th, td, p, h2 {
+            font-family: 'Times New Roman', Times, serif !important;
+            color: #000000;
+          }
+          body {
+            font-size: 12pt;
+            line-height: 1.25;
+          }
+          h2 {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          th {
+            font-size: 12pt;
+            font-weight: bold;
+            border: 1px solid #000000;
+            padding: 8px;
+            text-align: left;
+            background-color: #f2f2f2;
+          }
+          td {
+            font-size: 12pt;
+            border: 1px solid #000000;
+            padding: 8px;
+          }
         </style>
       </head>
       <body>
@@ -1180,12 +1210,12 @@ function AdminPanel({ showAlert }) {
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Roll No(password)</th>
-              <th style="text-align:center;">round1</th>
-              <th style="text-align:center;">round2</th>
-              <th style="text-align:center;">round3</th>
-              <th style="text-align:center;">total</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt;">Name</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt;">Roll No(password)</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt; text-align:center;">round1</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt; text-align:center;">round2</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt; text-align:center;">round3</th>
+              <th style="font-family:'Times New Roman', Times, serif; font-size:12pt; text-align:center;">total</th>
             </tr>
           </thead>
           <tbody>
@@ -1658,26 +1688,49 @@ function AdminPanel({ showAlert }) {
             <h3 className="mb-4">Submission Audit: <span style={{ color: 'hsl(var(--secondary))' }}>{selectedUserName}</span></h3>
 
             <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
-              {selectedUserResponses.map((r, idx) => (
-                <div key={r._id} className="glass-card mb-4" style={{ padding: '16px', borderLeft: r.isCorrect ? '4px solid hsl(var(--success))' : '4px solid hsl(var(--danger))' }}>
-                  <div className="flex-between mb-2">
-                    <strong>Round {r.round} - Question {idx + 1}</strong>
-                    <span className={`status-indicator ${r.isCorrect ? 'completed' : 'danger'}`} style={{ backgroundColor: r.isCorrect ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
-                      {r.isCorrect ? `Correct (+${r.pointsEarned} pts)` : 'Incorrect (0 pts)'}
-                    </span>
-                  </div>
+              {selectedUserResponses.map((r, idx) => {
+                const hasPoints = (r.pointsEarned || 0) > 0;
+                const isExact = !!r.isCorrect;
 
-                  {r.questionId?.questionText && (
-                    <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
-                      <strong>Question/Clue:</strong> "{r.questionId.questionText}"
+                return (
+                  <div
+                    key={r._id}
+                    className="glass-card mb-4"
+                    style={{
+                      padding: '16px',
+                      borderLeft: hasPoints
+                        ? (isExact ? '4px solid hsl(var(--success))' : '4px solid hsl(var(--secondary))')
+                        : '4px solid hsl(var(--danger))'
+                    }}
+                  >
+                    <div className="flex-between mb-2">
+                      <strong>Round {r.round} - Question {idx + 1}</strong>
+                      <span
+                        className={`status-indicator ${hasPoints ? (isExact ? 'completed' : 'pending') : 'danger'}`}
+                        style={{
+                          backgroundColor: hasPoints
+                            ? (isExact ? 'rgba(34, 197, 94, 0.1)' : 'rgba(6, 182, 212, 0.15)')
+                            : 'rgba(239, 68, 68, 0.1)'
+                        }}
+                      >
+                        {hasPoints
+                          ? (isExact ? `Exact Match (+${r.pointsEarned} pts)` : `Partial Credit (+${r.pointsEarned} pts)`)
+                          : 'Incorrect (0 pts)'}
+                      </span>
+                    </div>
+
+                    {r.questionId?.questionText && (
+                      <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
+                        <strong>Question/Clue:</strong> "{r.questionId.questionText}"
+                      </p>
+                    )}
+
+                    <p style={{ fontSize: '0.9rem' }}>
+                      <strong>User Submitted:</strong> <code style={{ color: hasPoints ? (isExact ? 'hsl(var(--success))' : 'hsl(var(--secondary))') : 'hsl(var(--danger))' }}>"{r.submittedAnswer}"</code>
                     </p>
-                  )}
-
-                  <p style={{ fontSize: '0.9rem' }}>
-                    <strong>User Submitted:</strong> <code style={{ color: r.isCorrect ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}>"{r.submittedAnswer}"</code>
-                  </p>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
 
               {selectedUserResponses.length === 0 && (
                 <p className="text-center" style={{ padding: '20px' }}>This user has not submitted any answers yet.</p>
